@@ -1,0 +1,82 @@
+#! /usr/bin/bash
+
+showHelp() {
+	echo "Usage: $0 <directory>"
+}
+
+if ! [ $# -eq 1 ]; then
+	showHelp
+	exit 1
+fi
+
+project_dir=$1
+echo "Generating makefile for ${project_dir}..."
+
+if ! [ -e $project_dir ]; then
+	echo "Target directory does not exist!"
+	exit 1
+fi
+
+if ! [ -r $project_dir ]; then
+	echo "Cannot read directory: permission denied!"
+	exit 1
+fi
+
+if ! [ -w $project_dir ]; then
+	echo "Cannot write directory: permission denied!"
+	exit 1
+fi
+
+makefile="${project_dir}/Makefile"
+
+if ! [ -e $makefile ]; then
+	touch $makefile
+else
+	if ! [ -r $makefile ]; then
+		echo "Cannot read $makefile: permission denied!"
+		exit 1
+	fi
+
+	if ! [ -w $makefile ]; then
+		echo "Cannot write $makefile: permission denied!"
+		exit 1
+	fi
+
+	echo -n > $makefile
+fi
+
+echo "CC = gcc" >> $makefile
+echo "CFLAGS = -O -I./headers" >> $makefile
+
+src_paths=$(find $project_dir -type f -name "*.c" | tr '\n' ' ')
+src_files=$(echo "$src_paths" |
+	awk -v prefix="$project_dir" ' {
+			gsub(prefix, "");
+			print
+		}')
+obj_files=$(echo "$src_files" | 
+	awk ' {
+			gsub(/\.c/, ".o");
+			print
+		}')
+echo "Source files: $src_files"
+
+main_function_path=$(echo "$src_paths" | xargs grep -l 'int main(')
+if [ -z $main_function_path ]; then
+	echo "Main function not found!"
+	exit 1
+fi
+
+main_file=$(basename "$main_function_path" .c)
+echo "Main function in: $(basename "$main_function_path")"
+
+echo "OBJECTS = $obj_files" >> $makefile
+echo "" >> $makefile
+echo "$main_file : \$(OBJECTS)" >> $makefile
+echo "	\$(CC) -o \$@ \$^" >> $makefile
+
+echo "clean:" >> $makefile
+echo "	rm -f \$(OBJECTS)" >> $makefile
+
+
+
