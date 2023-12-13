@@ -1,0 +1,18 @@
+CC = gcc
+CFLAGS = -O -I./include
+OBJECTS = rkw.o pierw.o delta.o
+LIBS = -lm
+
+all: prog
+
+libusux.a: $(OBJECTS)
+	ar rcs libusux.a $^
+
+prog: libusux.a
+	$(CC) -o $@ rkw.o -L. -lusux $(LIBS)
+
+rkw.o: ./include/rkw.h
+pierw.o delta.o: ./include/fun.h
+
+clean:
+	rm -f $(OBJECTS)

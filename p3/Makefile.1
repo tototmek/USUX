@@ -1,0 +1,13 @@
+CC = gcc
+CFLAGS = -O -I./include
+OBJECTS = rkw.o pierw.o delta.o
+LIBS = -lm
+
+prog : $(OBJECTS)
+	$(CC) -o $@ $^ $(LIBS)
+
+rkw.o: ./include/rkw.h
+pierw.o delta.o: ./include/fun.h
+
+clean:
+	rm -f $(OBJECTS)
